@@ -1,0 +1,4 @@
+colorama
+PyYAML
+requests
+tqdm
