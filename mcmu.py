@@ -26,12 +26,16 @@ class Color:
     MAGENTA = Fore.LIGHTMAGENTA_EX
 
 class Brackets(Color):
-    def __init__(self, color, text):
+    def __init__(self, color, text, jump_line=False):
         self.color = color
         self.text = text
+        self.jump_line = jump_line
 
     def __str__(self):
-        return f'{Fore.WHITE}[{self.color}{self.text}{Fore.WHITE}]{Fore.WHITE}'
+        if self.jump_line:
+            return f'\n{Fore.WHITE}[{self.color}{self.text}{Fore.WHITE}]{Fore.WHITE}'
+        else:
+            return f'{Fore.WHITE}[{self.color}{self.text}{Fore.WHITE}]{Fore.WHITE}'
 
 
 # Creating a class to store the settings
@@ -134,8 +138,34 @@ if not Path('mcmu-config.yaml').exists():
         }
         dump(data, app_config)
 
-    print()
-    print(Brackets(Color.YELLOW, 'INFO'), f'{Color.WHITE}The mcmu-config.yaml file has been successfully created! Please configure it before opening the program again!')
+    print(Brackets(Color.YELLOW, 'INFO', True), f'{Color.WHITE}The mcmu-config.yaml file has been successfully created! Please configure it before opening the program again!')
+    input()
+    exit()
+
+# Checks if minecraft directory exists
+if not Path(AppConfig.minecraft_dir).exists():
+    print(Brackets(Color.RED, 'FINISHED', True), f"{Color.WHITE}The directory '{AppConfig.minecraft_dir}' does not exist!")
+    input()
+    exit()
+
+# Checks if the mods directory exists
+if not Path(AppConfig.minecraft_dir + '/mods').exists():
+    print(Brackets(Color.RED, 'FINISHED', True), fr"{Color.WHITE}The mods directory '{AppConfig.minecraft_dir}\mods' does not exist!")
+    input()
+    exit()
+
+# Check if the mods directory is empty
+if not list(Path(AppConfig.minecraft_dir + '/mods').glob('*.jar')):
+    print(Brackets(Color.RED, 'FINISHED', True), f"{Color.WHITE}The mods directory '{AppConfig.minecraft_dir}\mods' is empty!")
+    input()
+    exit()
+
+# Verifica se a versão do minecraft existe
+available_versions = [
+    '1.7.10', '1.8', '1.8.1', '1.8.2', '1.8.3', '1.8.4', '1.8.5', '1.8.6', '1.8.7', '1.8.8', '1.8.9', '1.9', '1.9.1', '1.9.2', '1.9.3', '1.9.4', '1.10', '1.10.1', '1.10.2', '1.11', '1.11.1', '1.11.2', '1.12', '1.12.1', '1.12.2', '1.13', '1.13.1', '1.13.2', '1.14', '1.14.1', '1.14.2', '1.14.3', '1.14.4', '1.15', '1.15.1', '1.15.2', '1.16', '1.16.1', '1.16.2', '1.16.3', '1.16.4', '1.16.5', '1.17', '1.17.1', '1.18', '1.18.1', '1.18.2', '1.19', '1.19.1', '1.19.2', '1.19.3', '1.19.4', '1.20', '1.20.1',
+]
+if AppConfig.mod_version not in available_versions:
+    print(Brackets(Color.RED, 'FINISHED', True), f"{Color.WHITE}The version '{AppConfig.mod_version}' is not available!")
     input()
     exit()
 
@@ -145,8 +175,7 @@ for mod_dir in Path(AppConfig.minecraft_dir + '/mods').glob('*.jar'):
     mod_file = mod_dir.name
 
     # Mostra o arquivo que está sendo verificado
-    print()
-    print(Brackets(Color.YELLOW, 'INFO'), f"{Color.WHITE}File: {mod_file}")
+    print(Brackets(Color.YELLOW, 'INFO', True), f"{Color.WHITE}File: {mod_file}")
 
     # Verifica se o .jar está corrompido
     print(Brackets(Color.BLUE, 'RUNNING'), f"{Color.WHITE}Checking the file is corrupt...")
@@ -210,8 +239,7 @@ if AppConfig.temp_mods.exists():
 
 mod_list = [mod_dir.name for mod_dir in Path(AppConfig.minecraft_dir + '/mods').glob('*.jar')]
 
-print()
-print(Brackets(Color.GREEN, 'SUCCESS'), f"{Color.WHITE}All mods have been successfully verified/updated!")
+print(Brackets(Color.GREEN, 'SUCCESS', True), f"{Color.WHITE}All mods have been successfully verified/updated!")
 print(Brackets(Color.GREEN, 'SUCCESS'), f"{Color.WHITE}Mods installed ({len(mod_list)}): {mod_list}")
 print(Brackets(Color.GREEN, 'SUCCESS'), f"{Color.WHITE}Mod dependencies ({len(dependencies_list)}): {dependencies_list}")
 input()
