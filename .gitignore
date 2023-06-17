@@ -1,0 +1,7 @@
+# Editor folders/files
+.idea/
+venv/
+
+# Program folders/files
+.compiler/
+mcmu-config.yaml
