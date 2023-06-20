@@ -40,7 +40,7 @@ Keep your Minecraft mods updated and ready for action with Mod Syncer, the ultim
 - [x] Lists all installed dependencies mods.
 <br><br>
 - [ ] Being able to check and update that your mods are up to date with the latest released on CurseForge.
-- [ ] Ability to choose any loader for mod search. (Finished: Fabric and Forge Planned: Liteloader, Risugami's ModLoader, QuiltMC, Rift, etc...)
+- [ ] Ability to choose any loader for mod search. (Finished: Fabric and Forge & Planned: Liteloader, Risugami's ModLoader, QuiltMC, Rift, etc...)
 - [ ] Automatically downloads mod dependencies if they are not installed.
 - [ ] Ability to choose program display language.
 <br><br>
