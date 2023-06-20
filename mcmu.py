@@ -184,17 +184,17 @@ else:
     input()
     exit()
 
-# Inicia o atualizador
+# Start the updater process
 dependencies_list = list()
 for mod_dir in Path(AppConfig.minecraft_dir + '/mods').glob('*.jar'):
     mod_file = mod_dir.name
 
-    # Mostra o arquivo que está sendo verificado
+    # Shows the file being checked
     print(Brackets(Color.YELLOW, 'INFO', True), f'{Color.WHITE}File: {mod_file}')
 
-    # Verifica se o .jar está corrompido
+    # Checks if the .jar is corrupted
     print(
-        Brackets(Color.BLUE, 'RUNNING'), f'{Color.WHITE}Checking the file is corrupt...'
+        Brackets(Color.BLUE, 'RUNNING'), f'{Color.WHITE}Checking the file is corrupted...'
     )
     if not check_jarfile(mod_dir):
         print(
@@ -209,7 +209,7 @@ for mod_dir in Path(AppConfig.minecraft_dir + '/mods').glob('*.jar'):
             Brackets(Color.BLUE, 'RUNNING'), f'{Color.WHITE}The file is not corrupted!'
         )
 
-    # Pega as informações do mod
+    # Get mod info
     print(Brackets(Color.BLUE, 'RUNNING'), f'{Color.WHITE}Extracting information...')
     jar_info = get_info_from_jar(mod_dir)
     if not jar_info:
@@ -241,7 +241,7 @@ for mod_dir in Path(AppConfig.minecraft_dir + '/mods').glob('*.jar'):
         continue
     mod_filename, mod_download_url, mod_modrinth_sha512, mod_modrinth_sha1 = mod_data
 
-    # Verifica se o mod está atualizado
+    # Check if the mod is up to date
     print(Brackets(Color.BLUE, 'RUNNING'), f'{Color.WHITE}Official name: {mod_name}')
     print(
         Brackets(Color.BLUE, 'RUNNING'),
