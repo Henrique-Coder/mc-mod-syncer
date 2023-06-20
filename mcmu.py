@@ -1,5 +1,6 @@
 from hashlib import sha512, sha1
-from json import loads
+from json import loads as json_loads
+from toml import loads as toml_loads
 from pathlib import Path
 from sys import exit
 from time import sleep
@@ -49,7 +50,7 @@ if Path('mcmu-config.yaml').exists():
         corrupted_mods = Path(Path.cwd(), 'corrupted_mods')
         minecraft_dir = data['minecraft_dir']
         mod_version = data['mod_version']
-        mod_loader = 'fabric'
+        mod_loader = data['mod_loader']
 
 def check_jarfile(jarfile_path: Path) -> bool:
     try:
@@ -60,16 +61,22 @@ def check_jarfile(jarfile_path: Path) -> bool:
         return False
 
 def get_info_from_jar(jarfile_path: Path) -> Optional[tuple]:
-    if AppConfig.mod_loader == 'fabric':
-        try:
+    try:
+        if AppConfig.mod_loader == 'fabric':
             with ZipFile(jarfile_path, 'r') as jarfile:
-                data = loads(jarfile.read('fabric.mod.json').decode('utf-8'))
+                data = json_loads(jarfile.read('fabric.mod.json').decode('utf-8'))
                 mod_name = data['name']
-                dependencies = data['depends']
-        except Exception:
-            return None
-    elif AppConfig.mod_loader == 'forge':
-        return None  # TODO: Add forge support
+                dependencies = data['depends'] if data.get('depends') else list()
+
+        elif AppConfig.mod_loader == 'forge':
+            with ZipFile(jarfile_path, 'r') as jarfile:
+                data = toml_loads(jarfile.read('META-INF/mods.toml').decode('utf-8'))
+                mod_name = data['mods'][0]['displayName']
+                dependencies = data.get('dependencies')
+                dependencies = [dep['modId'] for dep in list(dependencies.items())[0][1]] if dependencies else list()
+    except Exception:
+        return None
+
     return mod_name, dependencies
 
 def get_hash_from_file(file_path: Path, hash_type: str) -> str:
@@ -114,7 +121,8 @@ def modrinth_api_project(slug_name: str) -> Optional[tuple]:
 if not Path('mcmu-config.yaml').exists():
     with open('mcmu-config.yaml', 'w') as app_config:
         data = r"minecraft_dir: 'C:\Users\******\AppData\Roaming\.minecraft'  # Directory where .minecraft is located"\
-               "\nmod_version: 'x.XX.X'  # Version that will be used to search and update mods"
+               "\nmod_version: 'x.XX.X'  # Version that will be used to search and update mods (1.7.10/latest)"\
+               "\nmod_loader: '******'  # Mod loader that will be used to search and update mods (fabric/forge)"
         app_config.write(data)
     print(
         Brackets(Color.YELLOW, 'INFO', True),
@@ -134,6 +142,7 @@ if not Path(AppConfig.minecraft_dir).exists():
     )
     input()
     exit()
+
 # Checks if the mods directory exists
 if not Path(AppConfig.minecraft_dir + '/mods').exists():
     print(
@@ -269,7 +278,7 @@ for mod_dir in Path(AppConfig.minecraft_dir + '/mods').glob('*.jar'):
                 progress_bar.close()
         print(
             Brackets(Color.BLUE, 'RUNNING'),
-            f"{Color.WHITE}The mod has been successfully downloaded!",
+            f'{Color.WHITE}The mod has been successfully downloaded!',
         )
         print(Brackets(Color.BLUE, 'RUNNING'), f'{Color.WHITE}Installing mod...')
         Path(AppConfig.temp_mods, mod_filename).rename(
