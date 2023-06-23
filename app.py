@@ -10,6 +10,7 @@ from colorama import init, Fore
 from requests import get
 from tqdm import tqdm
 from yaml import safe_load
+from tkinter import Tk, filedialog
 
 
 # Initializing colorama
@@ -45,6 +46,7 @@ if Path('mcmu-config.yaml').exists():
         data = safe_load(app_config)
 
     class AppConfig:
+        excluded_mods = list()
         temp_mods = Path(Path.cwd(), '.temp')
         old_mods = Path(Path.cwd(), 'old_mods')
         corrupted_mods = Path(Path.cwd(), 'corrupted_mods')
@@ -116,6 +118,9 @@ def modrinth_api_project(slug_name: str) -> Optional[tuple]:
     mod_modrinth_sha1 = project_data[0]['files'][0]['hashes']['sha1']
     return mod_filename, mod_download_url, mod_modrinth_sha512, mod_modrinth_sha1
 
+def prompt_input(brackets, message):
+    return input(f'{brackets} {message}')
+
 
 # Creating the mcmu-config.yaml file if it doesn't exist
 if not Path('mcmu-config.yaml').exists():
@@ -184,12 +189,71 @@ else:
     input()
     exit()
 
+# Pergunta se o usuario quer ignorar a atualizacao de algum mod
+if Path('ignored_mods.txt').exists():
+    with open('ignored_mods.txt', 'r') as ignored_mods_file:
+        ignored_mods = ignored_mods_file.read().strip().splitlines()
+        ignored_mods = [mod for mod in ignored_mods if mod]
+        AppConfig.excluded_mods.extend(ignored_mods)
+
+print(
+    Brackets(Color.YELLOW, 'INITIALIZING', True), f'{Color.YELLOW}Welcome to MC Mod Syncer!\n'
+)
+user_response = prompt_input(
+    Brackets(Color.BLUE, 'RUNNING'), f"{Color.WHITE}Do you want to ignore the update of some mod? (type anything for NO or 'y' for YES): "
+).lower()
+
+if user_response == 'y':
+    print(
+        Brackets(Color.BLUE, 'RUNNING'), f'{Color.WHITE}Opening the mods directory...'
+    )
+
+    tk_root = Tk()
+    tk_root.withdraw()
+    tk_root.attributes('-topmost', True)
+    excluded_mods = filedialog.askopenfilenames(
+        initialdir=AppConfig.minecraft_dir + '/mods',
+        title='Select the mods to ignore',
+        filetypes=((f'Jar files', '*.jar'),),
+    )
+    tk_root.destroy()
+
+    if not excluded_mods:
+        print(
+            Brackets(Color.RED, 'FINISHED'),
+            f'{Color.WHITE}No mods were selected!',
+        )
+
+    for mod_dir in excluded_mods:
+        jar_info = get_info_from_jar(Path(mod_dir))
+        if not jar_info:
+            continue
+        mod_name, dependencies = jar_info
+        AppConfig.excluded_mods.append(mod_name)
+
+    # Salva os novos arquivos ignorados sem sobrescrever os antigos e verificar se ja esta na lista
+    if not Path('ignored_mods.txt').exists():
+        open('ignored_mods.txt', 'w').close()
+
+    with open('ignored_mods.txt', 'r') as ignored_mods_file:
+        existing_mods = ignored_mods_file.read().strip().splitlines()
+
+    with open('ignored_mods.txt', 'a') as ignored_mods_file:
+        for mod in AppConfig.excluded_mods:
+            if mod not in existing_mods:
+                ignored_mods_file.write(f'{mod}\n')
+                existing_mods.append(mod)
+
+    AppConfig.excluded_mods = existing_mods
+
 # Start the updater process
 dependencies_list = list()
 for mod_dir in Path(AppConfig.minecraft_dir + '/mods').glob('*.jar'):
-    mod_file = mod_dir.name
+    if mod_dir.name in AppConfig.excluded_mods:
+        continue
 
     # Shows the file being checked
+    mod_file = mod_dir.name
     print(Brackets(Color.YELLOW, 'INFO', True), f'{Color.WHITE}File: {mod_file}')
 
     # Checks if the .jar is corrupted
@@ -226,6 +290,13 @@ for mod_dir in Path(AppConfig.minecraft_dir + '/mods').glob('*.jar'):
             if dependency.split(':')[0] not in dependencies_list
         ]
     )
+
+    if mod_name in AppConfig.excluded_mods:
+        print(
+            Brackets(Color.RED, 'FINISHED'),
+            f'{Color.WHITE}This mod is ignored!',
+        )
+        continue
 
     slug_name = modrinth_api_search(mod_name)
     if not slug_name:
