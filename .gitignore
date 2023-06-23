@@ -1,7 +1,9 @@
-# Editor folders/files
+# Editor files/folders
 .idea/
 venv/
 
-# Program folders/files
+# Program files/folders
+*.bat
+*.yaml
 .compiler/
-mcmu-config.yaml
+.minecraft/
